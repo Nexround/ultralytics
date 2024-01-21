@@ -17,6 +17,9 @@ from ultralytics.utils.ops import segment2box, xyxyxyxy2xywhr
 from ultralytics.utils.torch_utils import TORCHVISION_0_10, TORCHVISION_0_11, TORCHVISION_0_13
 from .utils import polygons2masks, polygons2masks_overlap
 
+import os
+import logging
+
 DEFAULT_MEAN = (0.0, 0.0, 0.0)
 DEFAULT_STD = (1.0, 1.0, 1.0)
 DEFAULT_CROP_FTACTION = 1.0
@@ -146,7 +149,7 @@ class Mosaic(BaseMixTransform):
         n (int, optional): The grid size, either 4 (for 2x2) or 9 (for 3x3).
     """
 
-    def __init__(self, dataset, imgsz=640, p=1.0, n=4, neg_dir='', pos_dir='', neg_num=''):
+    def __init__(self, dataset, neg_mosaic, imgsz=640, p=1.0, n=4, neg_dir='', pos_dir='', neg_num=1):
         """Initializes the object with a dataset, image size, probability, and border."""
         assert 0 <= p <= 1.0, f"The probability should be in range [0, 1], but got {p}."
         assert n in (4, 9), "grid must be equal to 4 or 9."
@@ -156,22 +159,23 @@ class Mosaic(BaseMixTransform):
         self.border = (-imgsz // 2, -imgsz // 2)  # width, height
         self.n = n
 
-        self.neg_num = int(neg_num)
-        self.img_neg_files = []  # 负样本路径列表
-        # “默认只有负样文件夹才有无标签负样本”
-        # 读取负样本文件夹
-        # additional feature
-        if os.path.isdir(neg_dir):
-            # 负样本路径
-            self.img_neg_files = [os.path.join(neg_dir, i) for i in os.listdir(neg_dir)]
-            logging.info(
-                colorstr("Negative dir: ")
-                + f"'{neg_dir}', using {len(self.img_neg_files)} pictures from the dir as negative samples during training"
-            )
-        else:
-            # 未找到负样本
-            self.img_neg_files = []
-
+        self.neg_mosaic = neg_mosaic # 若配置文件开启负样本mosaic，则为True
+        if self.neg_mosaic:
+            self.neg_num = int(neg_num)
+            self.img_neg_files = []  # 负样本路径列表
+            # “默认只有负样文件夹才有无标签负样本”
+            # 读取负样本文件夹
+            # additional feature
+            if os.path.isdir(neg_dir):
+                # 负样本路径
+                self.img_neg_files = [os.path.join(neg_dir, i) for i in os.listdir(neg_dir)]
+                logging.info(
+                    colorstr("Negative dir: ")
+                    + f"'{neg_dir}', using {len(self.img_neg_files)} pictures from the dir as negative samples during training"
+                )
+            else:
+                # 未找到负样本
+                self.img_neg_files = []
 
     def get_indexes(self, buffer=True):
         """Return a list of random indexes from the dataset."""
@@ -228,11 +232,12 @@ class Mosaic(BaseMixTransform):
         mosaic_labels = []
         s = self.imgsz
         yc, xc = (int(random.uniform(-x, 2 * s + x)) for x in self.border)  # mosaic center x, y
-        # 如果有负样本的话，从负样本数据集中随机抽取0~2张图
-        neg_max_in = 2
+
+        if self.neg_num < 0:
         # 若负样文件夹长度为0，则放入数为0，放入列表也为0
-        # num_neg = random.randint(0, neg_max_in) if len(self.img_neg_files) else 0  # 随机放入图(当前为0 ~ neg_max_in个)
-        num_neg = neg_max_in if len(self.img_neg_files) else 0  # 固定放入num_neg个
+            num_neg = random.randint(0, abs(self.neg_num)) if len(self.img_neg_files) else 0  # 放入随机数量(0 ~ neg_num)
+        else:
+            num_neg = self.neg_num if len(self.img_neg_files) else 0  # 放入固定数量num_neg个
         
         neg_img_url_list, neg_in_num = [], []
         if num_neg != 0:
@@ -1017,7 +1022,7 @@ def v8_transforms(dataset, imgsz, hyp, stretch=False):
     """Convert images to a size suitable for YOLOv8 training."""
     pre_transform = Compose(
         [
-            Mosaic(dataset, imgsz=imgsz, p=hyp.mosaic, neg_dir=hyp.neg_dir),
+            Mosaic(dataset, neg_mosaic=hyp.neg_mosaic, imgsz=imgsz, p=hyp.mosaic, neg_dir=hyp.neg_dir, neg_num = hyp.neg_num),
             CopyPaste(p=hyp.copy_paste),
             RandomPerspective(
                 degrees=hyp.degrees,

@@ -106,7 +106,9 @@ class BaseTrainer:
         # Dirs
         self.save_dir = get_save_dir(self.args)
         self.args.name = self.save_dir.name  # update name for loggers
+        self.neg_mosaic = self.args.neg_mosaic # 是否使用负样本马赛克
         self.neg_dir = self.args.neg_dir # 负样本文件夹
+        self.neg_num = self.args.neg_num # 负样本加入数量
         self.wdir = self.save_dir / "weights"  # weights dir
         if RANK in (-1, 0):
             self.wdir.mkdir(parents=True, exist_ok=True)  # make dir

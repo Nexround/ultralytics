@@ -6,6 +6,8 @@ mode: train # (str) YOLO mode, i.e. train, val, predict, export, track, benchmar
 
 # Train settings -------------------------------------------------------------------------------------------------------
 neg_dir: # 负样本文件夹地址
+neg_num: -2  # 负样本加入个数(int)，设置加入一张马赛克的数量[负数时为0-neg_num、正数时为放入neg_num固定值]
+neg_mosaic: False  # 是否使用负样本马赛克
 model: # (str, optional) path to model file, i.e. yolov8n.pt, yolov8n.yaml
 data: # (str, optional) path to data file, i.e. coco128.yaml
 epochs: 100 # (int) number of epochs to train for
