@@ -61,6 +61,6 @@ if __name__ == '__main__':
     create_folder_if_not_exists(folder_path)
 
     model = YOLO(args.model)
-    results = model(args.origin_dir)
+    results = model(args.origin_dir) # ultralytics.engine.results.Results
     save_results(results, folder_path)
     
