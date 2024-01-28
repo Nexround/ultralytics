@@ -6,9 +6,15 @@ import argparse
 
 
 def init_parser():
+    """
+    Initialize the argument parser for the inference script.
+
+    Returns:
+        args (argparse.Namespace): Parsed command-line arguments.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-- origin_dir', type=str)
+        '--origin_dir', type=str)
     parser.add_argument(
         '--save_dir', type=str, default='./results/')
     parser.add_argument(
@@ -34,9 +40,14 @@ def create_folder_if_not_exists(folder_path):
 
 
 def save_results(results, folder_path):
+    """
+    Save the results of predictions as images in the specified folder.
 
+    Args:
+        results (list): List of prediction results.
+        folder_path (str): Path to the folder where the images will be saved.
+    """
     for index, item in enumerate(results):
-
         im_array = item.plot()  # plot a BGR numpy array of predictions
         im = Image.fromarray(im_array[..., ::-1])  # RGB PIL image
         result_filename = folder_path + '/'+str(index)+'.jpg'
