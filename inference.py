@@ -14,11 +14,11 @@ def init_parser():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--origin_dir', type=str)
+        '--origin_dir', type=str, required=True)
     parser.add_argument(
         '--save_dir', type=str, default='./results/')
     parser.add_argument(
-        '--model', type=str)
+        '--model', type=str, required=True)
     args = parser.parse_args()
     return args
 
