@@ -57,7 +57,7 @@ def save_results(results, folder_path):
 
 if __name__ == '__main__':
     args = init_parser()
-    folder_path = './results/' + get_formatted_time()
+    folder_path = args.save_dir + get_formatted_time()
     create_folder_if_not_exists(folder_path)
 
     model = YOLO(args.model)
